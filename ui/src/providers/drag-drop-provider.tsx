@@ -25,9 +25,9 @@ export interface DragDropContextType {
   setDraggedNodeType: (type: NodeType) => void;
 
   // Event handlers
-  onDragStart: (event: DragEvent<HTMLDivElement>, nodeType: string) => void;
-  onDragOver: (event: DragEvent<HTMLDivElement>) => void;
-  onDrop: (event: DragEvent<HTMLDivElement>) => void;
+  onDragStart: (event: DragEvent<HTMLElement>, nodeType: string) => void;
+  onDragOver: (event: DragEvent<HTMLElement>) => void;
+  onDrop: (event: DragEvent<HTMLElement>) => void;
 }
 
 const DragDropContext = createContext<DragDropContextType | null>(null);
@@ -41,7 +41,7 @@ export const DragDropProvider = ({ children }: DragDropProviderProps) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const onDragStart = useCallback(
-    (event: DragEvent<HTMLDivElement>, nodeType: string) => {
+    (event: DragEvent<HTMLElement>, nodeType: string) => {
       setDraggedNodeType(nodeType);
       setIsDragging(true);
       event.dataTransfer.setData("text/plain", nodeType);
@@ -50,12 +50,12 @@ export const DragDropProvider = ({ children }: DragDropProviderProps) => {
     [],
   );
 
-  const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+  const onDragOver = useCallback((event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
   }, []);
 
-  const onDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
+  const onDrop = useCallback((event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     setIsDragging(false);
     setDraggedNodeType(null);

@@ -1,78 +1,34 @@
-import React, { useState, useCallback } from "react";
-import { Handle, Position, NodeProps } from "@xyflow/react";
-import { Input } from "@heroui/input";
+import React from "react";
+import { Position, NodeProps } from "@xyflow/react";
 
 import { StartNode as StartNodeType } from "../../../types/workflow-nodes";
+import { useNodeEditing } from "../../../hooks";
+import { NodeWrapper, NodeInput, NodeHandle } from "./shared";
 
 interface StartNodeProps extends NodeProps<StartNodeType> {}
 
-export const StartNode: React.FC<StartNodeProps> = ({ data, selected }) => {
-  const [isEditing, setIsEditing] = useState(false);
-  const [label, setLabel] = useState(data.label);
-
-  const handleDoubleClick = useCallback(() => {
-    setIsEditing(true);
-  }, []);
-
-  const handleSave = useCallback(() => {
-    // TODO: This will be connected to the flow provider in a later task
-    setIsEditing(false);
-  }, []);
-
-  const handleCancel = useCallback(() => {
-    setLabel(data.label);
-    setIsEditing(false);
-  }, [data.label]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter") {
-        handleSave();
-      } else if (e.key === "Escape") {
-        handleCancel();
-      }
-    },
-    [handleSave, handleCancel],
-  );
+export const StartNode: React.FC<StartNodeProps> = ({ id, data, selected }) => {
+  const { label, handleLabelChange, handleKeyDown } = useNodeEditing(id, data);
 
   return (
-    <div
-      className={`
-        relative min-w-[120px] min-h-[60px] px-4 py-3
-        bg-green-100 border-2 border-green-200 rounded-lg
-        shadow-sm hover:shadow-md transition-shadow
-        ${selected ? "ring-2 ring-blue-400" : ""}
-      `}
-      onDoubleClick={handleDoubleClick}
+    <NodeWrapper
+      className="min-w-[120px] min-h-[60px] bg-green-100 border-2 border-green-200"
+      selected={selected}
     >
       {/* Node Content */}
       <div className="flex flex-col items-center justify-center text-center">
         <div className="text-xs font-medium text-green-700 mb-1">START</div>
-
-        {isEditing ? (
-          <Input
-            className="w-full"
-            classNames={{
-              input: "text-center text-sm",
-              inputWrapper: "bg-white border-green-300",
-            }}
-            size="sm"
-            value={label}
-            variant="bordered"
-            onBlur={handleSave}
-            onChange={(e) => setLabel(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-        ) : (
-          <div className="text-sm font-semibold text-green-800 cursor-pointer">
-            {label}
-          </div>
-        )}
+        <NodeInput
+          borderColor="border-green-300"
+          value={label}
+          onChange={handleLabelChange}
+          onKeyDown={handleKeyDown}
+        />
       </div>
 
       {/* Output Handle - Bottom */}
-      <Handle
-        className="w-3 h-3 bg-green-500 border-2 border-white"
+      <NodeHandle
+        color="bg-green-500"
         id="output"
         position={Position.Bottom}
         style={{
@@ -82,6 +38,6 @@ export const StartNode: React.FC<StartNodeProps> = ({ data, selected }) => {
         }}
         type="source"
       />
-    </div>
+    </NodeWrapper>
   );
 };

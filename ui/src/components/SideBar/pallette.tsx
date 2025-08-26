@@ -77,7 +77,7 @@ export const Palette = () => {
       </div>
 
       {/* Start Node */}
-      <div
+      <button
         draggable
         className="dndnode-custom start-node"
         onClick={() => handleClickToAdd("start")}
@@ -88,10 +88,10 @@ export const Palette = () => {
           <div className="node-name">Start Node</div>
           <div className="handle-preview bottom" />
         </div>
-      </div>
+      </button>
 
       {/* Step Node */}
-      <div
+      <button
         draggable
         className="dndnode-custom step-node"
         onClick={() => handleClickToAdd("step")}
@@ -103,10 +103,10 @@ export const Palette = () => {
           <div className="node-name">Step Node</div>
           <div className="handle-preview bottom" />
         </div>
-      </div>
+      </button>
 
       {/* Decision Node */}
-      <div
+      <button
         draggable
         className="dndnode-custom decision-node"
         onClick={() => handleClickToAdd("decision")}
@@ -119,10 +119,10 @@ export const Palette = () => {
           <div className="handle-preview bottom-left" />
           <div className="handle-preview bottom-right" />
         </div>
-      </div>
+      </button>
 
       {/* End Node */}
-      <div
+      <button
         draggable
         className="dndnode-custom end-node"
         onClick={() => handleClickToAdd("end")}
@@ -133,7 +133,7 @@ export const Palette = () => {
           <div className="node-type-label">END</div>
           <div className="node-name">End Node</div>
         </div>
-      </div>
+      </button>
     </aside>
   );
 };

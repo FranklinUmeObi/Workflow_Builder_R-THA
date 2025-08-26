@@ -160,6 +160,111 @@ export const WorkflowBuilderProvider = ({
         }
       });
 
+      // Check connection rules for proper handle connections
+      currentEdges.forEach((edge) => {
+        const sourceNode = currentNodes.find((node) => node.id === edge.source);
+        const targetNode = currentNodes.find((node) => node.id === edge.target);
+
+        if (!sourceNode || !targetNode) {
+          errors.push({
+            type: "invalid-connection",
+            message: "Edge connects to non-existent node",
+            edgeId: edge.id,
+          });
+
+          return;
+        }
+
+        // Validate connection rules based on node types
+        // Start nodes: can only have outgoing connections
+        if (sourceNode.type === "start") {
+          const outgoingEdges = currentEdges.filter(
+            (e) => e.source === sourceNode.id,
+          );
+
+          if (outgoingEdges.length > 1) {
+            errors.push({
+              type: "invalid-connection",
+              message: `Start node "${sourceNode.data.label}" can only have one outgoing connection`,
+              nodeId: sourceNode.id,
+            });
+          }
+        }
+
+        // End nodes: can only have incoming connections
+        if (targetNode.type === "end") {
+          const incomingEdges = currentEdges.filter(
+            (e) => e.target === targetNode.id,
+          );
+
+          if (incomingEdges.length > 1) {
+            errors.push({
+              type: "invalid-connection",
+              message: `End node "${targetNode.data.label}" can only have one incoming connection`,
+              nodeId: targetNode.id,
+            });
+          }
+        }
+
+        // Step nodes: can have one incoming and one outgoing connection
+        if (sourceNode.type === "step") {
+          const outgoingEdges = currentEdges.filter(
+            (e) => e.source === sourceNode.id,
+          );
+
+          if (outgoingEdges.length > 1) {
+            errors.push({
+              type: "invalid-connection",
+              message: `Step node "${sourceNode.data.label}" can only have one outgoing connection`,
+              nodeId: sourceNode.id,
+            });
+          }
+        }
+
+        if (targetNode.type === "step") {
+          const incomingEdges = currentEdges.filter(
+            (e) => e.target === targetNode.id,
+          );
+
+          if (incomingEdges.length > 1) {
+            errors.push({
+              type: "invalid-connection",
+              message: `Step node "${targetNode.data.label}" can only have one incoming connection`,
+              nodeId: targetNode.id,
+            });
+          }
+        }
+
+        // Decision nodes: can have one incoming and up to two outgoing connections
+        if (sourceNode.type === "decision") {
+          const outgoingEdges = currentEdges.filter(
+            (e) => e.source === sourceNode.id,
+          );
+
+          if (outgoingEdges.length > 2) {
+            errors.push({
+              type: "invalid-connection",
+              message: `Decision node "${sourceNode.data.label}" can only have up to two outgoing connections`,
+              nodeId: sourceNode.id,
+            });
+          }
+        }
+
+        if (targetNode.type === "decision") {
+          const incomingEdges = currentEdges.filter(
+            (e) => e.target === targetNode.id,
+          );
+
+          if (incomingEdges.length > 1) {
+            errors.push({
+              type: "invalid-connection",
+              message: `Decision node "${targetNode.data.label}" can only have one incoming connection`,
+              nodeId: targetNode.id,
+            });
+          }
+        }
+      });
+
       const result: ValidationResult = {
         isValid: errors.length === 0,
         errors,

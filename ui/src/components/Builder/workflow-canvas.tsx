@@ -5,17 +5,23 @@ import {
   ReactFlow,
   useReactFlow,
 } from "@xyflow/react";
-import { useCallback, DragEvent } from "react";
+import { useCallback, DragEvent, useMemo } from "react";
 
-import { useWorkflowBuilder } from "@/providers/flow-provider";
-import { useWorkflowShortcuts } from "@/hooks/use-workflow-shortcuts";
-import { useDragDrop } from "@/providers/drag-drop-provider";
+import { ValidationBadge } from "./ValidationBadge";
+import { StartNode } from "./nodes/StartNode";
+import { StepNode } from "./nodes/StepNode";
+import { DecisionNode } from "./nodes/DecisionNode";
+import { EndNode } from "./nodes/EndNode";
+
 import {
   createDefaultStartNode,
   createDefaultStepNode,
   createDefaultDecisionNode,
   createDefaultEndNode,
 } from "@/types/workflow-nodes";
+import { useDragDrop } from "@/providers/drag-drop-provider";
+import { useWorkflowShortcuts } from "@/hooks/use-workflow-shortcuts";
+import { useWorkflowBuilder } from "@/providers/flow-provider";
 
 export const WorkflowCanvas = () => {
   const { screenToFlowPosition } = useReactFlow();
@@ -25,6 +31,17 @@ export const WorkflowCanvas = () => {
     useWorkflowBuilder();
 
   useWorkflowShortcuts({ enabled: true });
+
+  // Register custom node types
+  const nodeTypes = useMemo(
+    () => ({
+      start: StartNode,
+      step: StepNode,
+      decision: DecisionNode,
+      end: EndNode,
+    }),
+    [],
+  );
 
   const handleDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) => {
@@ -74,10 +91,11 @@ export const WorkflowCanvas = () => {
   );
 
   return (
-    <div className="reactflow-wrapper">
+    <div className="reactflow-wrapper relative">
       <ReactFlow
         fitView
         edges={edges}
+        nodeTypes={nodeTypes}
         nodes={nodes}
         onConnect={onConnect}
         onDragOver={onDragOver}
@@ -89,6 +107,11 @@ export const WorkflowCanvas = () => {
         <Controls />
         <MiniMap />
       </ReactFlow>
+
+      {/* Validation Badge positioned in top-left corner */}
+      <div className="absolute top-4 left-4 z-10">
+        <ValidationBadge />
+      </div>
     </div>
   );
 };

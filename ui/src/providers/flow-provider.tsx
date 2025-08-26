@@ -6,7 +6,6 @@ import {
   ReactNode,
 } from "react";
 import {
-  Node,
   Edge,
   NodeChange,
   EdgeChange,
@@ -16,21 +15,21 @@ import {
   addEdge,
 } from "@xyflow/react";
 
-// Types
-export interface WorkflowNode extends Node {
-  data: {
-    label?: string;
-    [key: string]: any;
-  };
-}
+import {
+  CustomWorkflowNode,
+  ValidationResult,
+  ValidationError,
+  createDefaultStartNode,
+} from "../types/workflow-nodes";
 
 export interface WorkflowEdge extends Edge {
   type?: string;
+  label?: string;
 }
 
 export interface WorkflowBuilderContextType {
   // State
-  nodes: WorkflowNode[];
+  nodes: CustomWorkflowNode[];
   edges: WorkflowEdge[];
 
   // Core ReactFlow handlers
@@ -39,9 +38,9 @@ export interface WorkflowBuilderContextType {
   onConnect: (connection: Connection) => void;
 
   // Node operations
-  addNode: (node: Omit<WorkflowNode, "id"> & { id?: string }) => void;
+  addNode: (node: Omit<CustomWorkflowNode, "id"> & { id?: string }) => void;
   removeNode: (nodeId: string) => void;
-  updateNode: (nodeId: string, updates: Partial<WorkflowNode>) => void;
+  updateNode: (nodeId: string, updates: Partial<CustomWorkflowNode>) => void;
   duplicateNode: (nodeId: string) => void;
 
   // Edge operations
@@ -53,17 +52,30 @@ export interface WorkflowBuilderContextType {
   resetWorkflow: () => void;
 
   // Utility functions
-  getNodeById: (nodeId: string) => WorkflowNode | undefined;
+  getNodeById: (nodeId: string) => CustomWorkflowNode | undefined;
   getEdgeById: (edgeId: string) => WorkflowEdge | undefined;
-  getConnectedNodes: (nodeId: string) => WorkflowNode[];
+  getConnectedNodes: (nodeId: string) => CustomWorkflowNode[];
   getNodeEdges: (nodeId: string) => WorkflowEdge[];
 
   // Selection
-  selectedNodes: WorkflowNode[];
+  selectedNodes: CustomWorkflowNode[];
   selectedEdges: WorkflowEdge[];
-  setSelectedNodes: (nodes: WorkflowNode[]) => void;
+  setSelectedNodes: (nodes: CustomWorkflowNode[]) => void;
   setSelectedEdges: (edges: WorkflowEdge[]) => void;
   clearSelection: () => void;
+
+  // Validation
+  validationResult: ValidationResult;
+  validateWorkflow: () => ValidationResult;
+
+  // Inline editing
+  editingNodeId: string | null;
+  setEditingNodeId: (nodeId: string | null) => void;
+  isNodeEditing: (nodeId: string) => boolean;
+  saveNodeChanges: (
+    nodeId: string,
+    changes: Partial<CustomWorkflowNode>,
+  ) => void;
 }
 
 const WorkflowBuilderContext = createContext<WorkflowBuilderContextType | null>(
@@ -71,28 +83,15 @@ const WorkflowBuilderContext = createContext<WorkflowBuilderContextType | null>(
 );
 
 // Initial data
-const initialNodes: WorkflowNode[] = [
-  {
-    id: "n1",
-    position: { x: 0, y: 0 },
-    data: { label: "Node 1" },
-    type: "default",
-  },
-  {
-    id: "n2",
-    position: { x: 0, y: 100 },
-    data: { label: "Node 2" },
-    type: "default",
-  },
+const initialNodes: CustomWorkflowNode[] = [
+  createDefaultStartNode("n1", { x: 100, y: 100 }),
 ];
 
-const initialEdges: WorkflowEdge[] = [
-  { id: "n1-n2", source: "n1", target: "n2", type: "step" },
-];
+const initialEdges: WorkflowEdge[] = [];
 
 interface WorkflowBuilderProviderProps {
   children: ReactNode;
-  defaultNodes?: WorkflowNode[];
+  defaultNodes?: CustomWorkflowNode[];
   defaultEdges?: WorkflowEdge[];
 }
 
@@ -101,53 +100,175 @@ export const WorkflowBuilderProvider = ({
   defaultNodes = initialNodes,
   defaultEdges = initialEdges,
 }: WorkflowBuilderProviderProps) => {
-  const [nodes, setNodes] = useState<WorkflowNode[]>(defaultNodes);
+  const [nodes, setNodes] = useState<CustomWorkflowNode[]>(defaultNodes);
   const [edges, setEdges] = useState<WorkflowEdge[]>(defaultEdges);
-  const [selectedNodes, setSelectedNodes] = useState<WorkflowNode[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<CustomWorkflowNode[]>([]);
   const [selectedEdges, setSelectedEdges] = useState<WorkflowEdge[]>([]);
 
-  // Core ReactFlow handlers
-  const onNodesChange = useCallback((changes: NodeChange[]) => {
-    setNodes((nodes) => applyNodeChanges(changes, nodes));
-  }, []);
+  // Inline editing state
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
 
-  const onEdgesChange = useCallback((changes: EdgeChange[]) => {
-    setEdges((edges) => applyEdgeChanges(changes, edges));
-  }, []);
+  // Validation state
+  const [validationResult, setValidationResult] = useState<ValidationResult>({
+    isValid: true,
+    errors: [],
+  });
 
-  const onConnect = useCallback((connection: Connection) => {
-    setEdges((edges) => addEdge(connection, edges));
-  }, []);
+  // Helper function to validate workflow
+  const performValidation = useCallback(
+    (currentNodes: CustomWorkflowNode[], currentEdges: WorkflowEdge[]) => {
+      const errors: ValidationError[] = [];
 
-  // Node operations
-  const addNode = useCallback(
-    (nodeData: Omit<WorkflowNode, "id"> & { id?: string }) => {
-      const newNode: WorkflowNode = {
-        id: nodeData.id || `node-${Date.now()}`,
-        ...nodeData,
+      // Check for exactly one Start node
+      const startNodes = currentNodes.filter((node) => node.type === "start");
+
+      if (startNodes.length === 0) {
+        errors.push({
+          type: "missing-start",
+          message: "Workflow must have exactly one Start node",
+        });
+      } else if (startNodes.length > 1) {
+        errors.push({
+          type: "multiple-start",
+          message: "Workflow can only have one Start node",
+        });
+      }
+
+      // Check Decision node edge labeling
+      const decisionNodes = currentNodes.filter(
+        (node) => node.type === "decision",
+      );
+
+      decisionNodes.forEach((decisionNode) => {
+        const outgoingEdges = currentEdges.filter(
+          (edge) => edge.source === decisionNode.id,
+        );
+
+        if (outgoingEdges.length === 2) {
+          const hasYesLabel = outgoingEdges.some(
+            (edge) => edge.label === "yes",
+          );
+          const hasNoLabel = outgoingEdges.some((edge) => edge.label === "no");
+
+          if (!hasYesLabel || !hasNoLabel) {
+            errors.push({
+              type: "unlabeled-decision-edges",
+              message: `Decision node "${decisionNode.data.label}" must have "yes" and "no" labeled edges when it has two connections`,
+              nodeId: decisionNode.id,
+            });
+          }
+        }
+      });
+
+      const result: ValidationResult = {
+        isValid: errors.length === 0,
+        errors,
       };
 
-      setNodes((nds) => [...nds, newNode]);
+      setValidationResult(result);
+
+      return result;
     },
     [],
   );
 
-  const removeNode = useCallback((nodeId: string) => {
-    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-    setEdges((eds) =>
-      eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId),
-    );
-  }, []);
+  // Core ReactFlow handlers
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      setNodes(
+        (currentNodes) =>
+          applyNodeChanges(changes, currentNodes) as CustomWorkflowNode[],
+      );
+      // Trigger validation after state update
+      setTimeout(() => performValidation(nodes, edges), 0);
+    },
+    [nodes, edges, performValidation],
+  );
 
-  const updateNode = useCallback(
-    (nodeId: string, updates: Partial<WorkflowNode>) => {
-      setNodes((nds) =>
-        nds.map((node) =>
-          node.id === nodeId ? { ...node, ...updates } : node,
+  const onEdgesChange = useCallback(
+    (changes: EdgeChange[]) => {
+      setEdges((currentEdges) => {
+        const updatedEdges = applyEdgeChanges(
+          changes,
+          currentEdges,
+        ) as WorkflowEdge[];
+
+        // Trigger validation after edge changes
+        setTimeout(() => performValidation(nodes, updatedEdges), 0);
+
+        return updatedEdges;
+      });
+    },
+    [nodes, performValidation],
+  );
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      setEdges((currentEdges) => {
+        const updatedEdges = addEdge(
+          connection,
+          currentEdges,
+        ) as WorkflowEdge[];
+
+        // Trigger validation after new connection
+        setTimeout(() => performValidation(nodes, updatedEdges), 0);
+
+        return updatedEdges;
+      });
+    },
+    [nodes, performValidation],
+  );
+
+  // Node operations
+  const addNode = useCallback(
+    (nodeData: Omit<CustomWorkflowNode, "id"> & { id?: string }) => {
+      const newNode: CustomWorkflowNode = {
+        id: nodeData.id || `node-${Date.now()}`,
+        ...nodeData,
+      } as CustomWorkflowNode;
+
+      const updatedNodes = [...nodes, newNode];
+
+      setNodes(updatedNodes);
+      // Trigger validation after state update
+      setTimeout(() => performValidation(updatedNodes, edges), 0);
+    },
+    [nodes, edges, performValidation],
+  );
+
+  const removeNode = useCallback(
+    (nodeId: string) => {
+      const updatedNodes = nodes.filter((node) => node.id !== nodeId);
+
+      setNodes(updatedNodes);
+      setEdges((currentEdges) =>
+        currentEdges.filter(
+          (edge) => edge.source !== nodeId && edge.target !== nodeId,
         ),
       );
+
+      // Clear editing state if removing the node being edited
+      if (editingNodeId === nodeId) {
+        setEditingNodeId(null);
+      }
+
+      // Trigger validation after state update
+      setTimeout(() => performValidation(updatedNodes, edges), 0);
     },
-    [],
+    [nodes, editingNodeId, edges, performValidation],
+  );
+
+  const updateNode = useCallback(
+    (nodeId: string, updates: Partial<CustomWorkflowNode>) => {
+      const updatedNodes = nodes.map((node) =>
+        node.id === nodeId ? { ...node, ...updates } : node,
+      ) as CustomWorkflowNode[];
+
+      setNodes(updatedNodes);
+      // Trigger validation after state update
+      setTimeout(() => performValidation(updatedNodes, edges), 0);
+    },
+    [nodes, edges, performValidation],
   );
 
   const duplicateNode = useCallback(
@@ -155,7 +276,7 @@ export const WorkflowBuilderProvider = ({
       const node = nodes.find((n) => n.id === nodeId);
 
       if (node) {
-        const newNode: WorkflowNode = {
+        const newNode: CustomWorkflowNode = {
           ...node,
           id: `${node.id}-copy-${Date.now()}`,
           position: {
@@ -165,26 +286,39 @@ export const WorkflowBuilderProvider = ({
           selected: false,
         };
 
-        setNodes((nds) => [...nds, newNode]);
+        const updatedNodes = [...nodes, newNode];
+
+        setNodes(updatedNodes);
+        // Trigger validation after state update
+        setTimeout(() => performValidation(updatedNodes, edges), 0);
       }
     },
-    [nodes],
+    [nodes, edges, performValidation],
   );
 
   // Edge operations
-  const removeEdge = useCallback((edgeId: string) => {
-    setEdges((eds) => eds.filter((edge) => edge.id !== edgeId));
-  }, []);
+  const removeEdge = useCallback(
+    (edgeId: string) => {
+      const updatedEdges = edges.filter((edge) => edge.id !== edgeId);
+
+      setEdges(updatedEdges);
+      // Trigger validation after removing edge
+      setTimeout(() => performValidation(nodes, updatedEdges), 0);
+    },
+    [nodes, edges, performValidation],
+  );
 
   const updateEdge = useCallback(
     (edgeId: string, updates: Partial<WorkflowEdge>) => {
-      setEdges((eds) =>
-        eds.map((edge) =>
-          edge.id === edgeId ? { ...edge, ...updates } : edge,
-        ),
+      const updatedEdges = edges.map((edge) =>
+        edge.id === edgeId ? { ...edge, ...updates } : edge,
       );
+
+      setEdges(updatedEdges);
+      // Trigger validation after updating edge
+      setTimeout(() => performValidation(nodes, updatedEdges), 0);
     },
-    [],
+    [nodes, edges, performValidation],
   );
 
   // Workflow operations
@@ -193,6 +327,8 @@ export const WorkflowBuilderProvider = ({
     setEdges([]);
     setSelectedNodes([]);
     setSelectedEdges([]);
+    setEditingNodeId(null);
+    setValidationResult({ isValid: true, errors: [] });
   }, []);
 
   const resetWorkflow = useCallback(() => {
@@ -200,7 +336,10 @@ export const WorkflowBuilderProvider = ({
     setEdges(defaultEdges);
     setSelectedNodes([]);
     setSelectedEdges([]);
-  }, [defaultNodes, defaultEdges]);
+    setEditingNodeId(null);
+    // Trigger validation for default nodes
+    setTimeout(() => performValidation(defaultNodes, defaultEdges), 0);
+  }, [defaultNodes, defaultEdges, performValidation]);
 
   // Utility functions
   const getNodeById = useCallback(
@@ -249,6 +388,27 @@ export const WorkflowBuilderProvider = ({
     setSelectedEdges([]);
   }, []);
 
+  // Validation logic
+  const validateWorkflow = useCallback((): ValidationResult => {
+    return performValidation(nodes, edges);
+  }, [nodes, edges, performValidation]);
+
+  // Inline editing functions
+  const isNodeEditing = useCallback(
+    (nodeId: string) => {
+      return editingNodeId === nodeId;
+    },
+    [editingNodeId],
+  );
+
+  const saveNodeChanges = useCallback(
+    (nodeId: string, changes: Partial<CustomWorkflowNode>) => {
+      updateNode(nodeId, changes);
+      setEditingNodeId(null);
+    },
+    [updateNode],
+  );
+
   const contextValue: WorkflowBuilderContextType = {
     // State
     nodes,
@@ -285,6 +445,16 @@ export const WorkflowBuilderProvider = ({
     setSelectedNodes,
     setSelectedEdges,
     clearSelection,
+
+    // Validation
+    validationResult,
+    validateWorkflow,
+
+    // Inline editing
+    editingNodeId,
+    setEditingNodeId,
+    isNodeEditing,
+    saveNodeChanges,
   };
 
   return (

@@ -5,7 +5,8 @@ import {
   getViewportForBounds,
 } from "@xyflow/react";
 
-import { useWorkflowBuilder, WorkflowNode } from "@/providers/flow-provider";
+import { useWorkflowBuilder } from "@/providers/flow-provider";
+import { CustomWorkflowNode } from "@/types/workflow-nodes";
 
 export const useWorkflowUtils = () => {
   const reactFlowInstance = useReactFlow();
@@ -46,7 +47,7 @@ export const useWorkflowUtils = () => {
 
   // Node positioning utilities
   const getOptimalNodePosition = useCallback(
-    (width = 200, height = 100) => {
+    (_width = 200, height = 100) => {
       if (!isReactFlowReady) {
         return { x: 100, y: 100 };
       }
@@ -73,7 +74,7 @@ export const useWorkflowUtils = () => {
 
   const addNodeAtPosition = useCallback(
     (
-      nodeData: Omit<WorkflowNode, "id" | "position">,
+      nodeData: Omit<CustomWorkflowNode, "id" | "position">,
       position?: { x: number; y: number },
     ) => {
       const nodePosition = position || getOptimalNodePosition();

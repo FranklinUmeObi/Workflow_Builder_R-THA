@@ -10,6 +10,12 @@ import { useCallback, DragEvent } from "react";
 import { useWorkflowBuilder } from "@/providers/flow-provider";
 import { useWorkflowShortcuts } from "@/hooks/use-workflow-shortcuts";
 import { useDragDrop } from "@/providers/drag-drop-provider";
+import {
+  createDefaultStartNode,
+  createDefaultStepNode,
+  createDefaultDecisionNode,
+  createDefaultEndNode,
+} from "@/types/workflow-nodes";
 
 export const WorkflowCanvas = () => {
   const { screenToFlowPosition } = useReactFlow();
@@ -36,11 +42,30 @@ export const WorkflowCanvas = () => {
         y: event.clientY,
       });
 
-      addNode({
-        data: { label: `${draggedNodeType} node` },
-        position,
-        type: draggedNodeType ?? "default",
-      });
+      const nodeId = `node-${Date.now()}`;
+
+      // Create the appropriate node type based on draggedNodeType
+      let newNode;
+
+      switch (draggedNodeType) {
+        case "start":
+          newNode = createDefaultStartNode(nodeId, position);
+          break;
+        case "step":
+          newNode = createDefaultStepNode(nodeId, position);
+          break;
+        case "decision":
+          newNode = createDefaultDecisionNode(nodeId, position);
+          break;
+        case "end":
+          newNode = createDefaultEndNode(nodeId, position);
+          break;
+        default:
+          // Fallback to start node if type is unknown
+          newNode = createDefaultStartNode(nodeId, position);
+      }
+
+      addNode(newNode);
 
       // Clean up drag state
       onDrop(event);

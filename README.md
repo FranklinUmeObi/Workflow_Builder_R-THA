@@ -2,6 +2,8 @@
 
 A focused workflow builder UI for creating underwriting flows. Built with React + TypeScript, this tool provides a clean canvas interface for designing simple decision workflows with drag-and-drop functionality.
 
+![Demo](Demo.png)
+
 ## How To Run
 
 ```bash

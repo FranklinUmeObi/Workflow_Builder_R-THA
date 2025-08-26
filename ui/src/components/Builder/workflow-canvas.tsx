@@ -25,7 +25,14 @@ import { useWorkflowBuilder } from "@/providers/flow-provider";
 
 export const WorkflowCanvas = () => {
   const { screenToFlowPosition } = useReactFlow();
-  const { draggedNodeType, onDragOver, onDrop } = useDragDrop();
+  const {
+    draggedNodeType,
+    isDragging,
+    isOverDropZone,
+    onDragOver,
+    onDrop,
+    setIsOverDropZone,
+  } = useDragDrop();
 
   const { nodes, addNode, edges, onNodesChange, onEdgesChange, onConnect } =
     useWorkflowBuilder();
@@ -41,6 +48,23 @@ export const WorkflowCanvas = () => {
       end: EndNode,
     }),
     [],
+  );
+
+  const handleDragOver = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      onDragOver(event);
+    },
+    [onDragOver],
+  );
+
+  const handleDragLeave = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      // Only set to false if we're actually leaving the drop zone
+      if (!event.currentTarget.contains(event.relatedTarget as Node)) {
+        setIsOverDropZone(false);
+      }
+    },
+    [setIsOverDropZone],
   );
 
   const handleDrop = useCallback(
@@ -91,14 +115,17 @@ export const WorkflowCanvas = () => {
   );
 
   return (
-    <div className="reactflow-wrapper relative">
+    <div
+      className={`reactflow-wrapper relative ${isDragging ? "drag-active" : ""} ${isOverDropZone ? "drop-zone-active" : ""}`}
+    >
       <ReactFlow
-        fitView
+        defaultViewport={{ x: 0, y: 0, zoom: 1 }}
         edges={edges}
         nodeTypes={nodeTypes}
         nodes={nodes}
         onConnect={onConnect}
-        onDragOver={onDragOver}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
         onDrop={handleDrop}
         onEdgesChange={onEdgesChange}
         onNodesChange={onNodesChange}
@@ -107,6 +134,27 @@ export const WorkflowCanvas = () => {
         <Controls />
         <MiniMap />
       </ReactFlow>
+
+      {/* Drop zone indicator overlay */}
+      {isDragging && (
+        <div className={`drop-zone-overlay ${isOverDropZone ? "active" : ""}`}>
+          <div className="drop-zone-message">
+            {isOverDropZone ? (
+              <>
+                <div className="drop-icon">📍</div>
+                <div className="drop-text">
+                  Drop to add {draggedNodeType} node
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="drop-icon">🎯</div>
+                <div className="drop-text">Drag here to add node</div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Validation Badge positioned in top-left corner */}
       <div className="absolute top-4 left-4 z-10">

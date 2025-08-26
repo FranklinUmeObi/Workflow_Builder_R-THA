@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+
 import { DecisionNode, DecisionCondition } from "../types/workflow-nodes";
 
 export const useDecisionCondition = (
@@ -21,8 +22,9 @@ export const useDecisionCondition = (
   const updateCondition = useCallback(
     (field: keyof DecisionCondition, value: string) => {
       const newCondition = { ...condition, [field]: value };
+
       setCondition(newCondition);
-      
+
       // Debounce the update
       setTimeout(() => {
         updateNodeData({ condition: newCondition });

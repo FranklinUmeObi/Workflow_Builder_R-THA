@@ -8,7 +8,7 @@ import {
 } from "@/types/workflow-nodes";
 
 export const Palette = () => {
-  const { onDragStart } = useDragDrop();
+  const { onDragStart, isDragging, draggedNodeType } = useDragDrop();
   const { addNode, nodes } = useWorkflowBuilder();
 
   const handleClickToAdd = (nodeType: string) => {
@@ -79,7 +79,7 @@ export const Palette = () => {
       {/* Start Node */}
       <button
         draggable
-        className="dndnode-custom start-node"
+        className={`dndnode-custom start-node ${isDragging && draggedNodeType === "start" ? "dragging" : ""}`}
         onClick={() => handleClickToAdd("start")}
         onDragStart={(event) => onDragStart(event, "start")}
       >
@@ -93,7 +93,7 @@ export const Palette = () => {
       {/* Step Node */}
       <button
         draggable
-        className="dndnode-custom step-node"
+        className={`dndnode-custom step-node ${isDragging && draggedNodeType === "step" ? "dragging" : ""}`}
         onClick={() => handleClickToAdd("step")}
         onDragStart={(event) => onDragStart(event, "step")}
       >
@@ -108,7 +108,7 @@ export const Palette = () => {
       {/* Decision Node */}
       <button
         draggable
-        className="dndnode-custom decision-node"
+        className={`dndnode-custom decision-node ${isDragging && draggedNodeType === "decision" ? "dragging" : ""}`}
         onClick={() => handleClickToAdd("decision")}
         onDragStart={(event) => onDragStart(event, "decision")}
       >
@@ -124,7 +124,7 @@ export const Palette = () => {
       {/* End Node */}
       <button
         draggable
-        className="dndnode-custom end-node"
+        className={`dndnode-custom end-node ${isDragging && draggedNodeType === "end" ? "dragging" : ""}`}
         onClick={() => handleClickToAdd("end")}
         onDragStart={(event) => onDragStart(event, "end")}
       >

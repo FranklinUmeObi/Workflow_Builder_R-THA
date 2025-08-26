@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
+
 import { StepNode } from "../types/workflow-nodes";
 
 export const useStepConfig = (
@@ -17,6 +18,7 @@ export const useStepConfig = (
   const addConfigPair = useCallback(() => {
     const newKey = `key${Object.keys(config).length + 1}`;
     const newConfig = { ...config, [newKey]: "" };
+
     setConfig(newConfig);
     updateNodeData({ config: newConfig });
   }, [config, updateNodeData]);
@@ -26,6 +28,7 @@ export const useStepConfig = (
       if (oldKey === newKey) return;
 
       const newConfig = { ...config };
+
       newConfig[newKey] = newConfig[oldKey];
       delete newConfig[oldKey];
 
@@ -41,6 +44,7 @@ export const useStepConfig = (
   const updateConfigValue = useCallback(
     (key: string, value: string) => {
       const newConfig = { ...config, [key]: value };
+
       setConfig(newConfig);
       // Debounce the update
       setTimeout(() => {
@@ -53,6 +57,7 @@ export const useStepConfig = (
   const removeConfigPair = useCallback(
     (key: string) => {
       const newConfig = { ...config };
+
       delete newConfig[key];
       setConfig(newConfig);
       updateNodeData({ config: newConfig });

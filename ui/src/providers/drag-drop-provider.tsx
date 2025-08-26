@@ -1,19 +1,95 @@
-import { createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+  DragEvent,
+} from "react";
 
-const DnDContext = createContext([null, (_: any) => {}]);
+// Types
+export type NodeType = string | null;
 
-export const DnDProvider = ({ children }: { children: React.ReactNode }) => {
-  const [type, setType] = useState(null);
+export interface NodeData {
+  data: { label: string };
+  position: { x: number; y: number };
+  type: string;
+}
+
+export interface DragDropContextType {
+  // State
+  draggedNodeType: NodeType;
+  isDragging: boolean;
+
+  // Actions
+  setDraggedNodeType: (type: NodeType) => void;
+
+  // Event handlers
+  onDragStart: (event: DragEvent<HTMLDivElement>, nodeType: string) => void;
+  onDragOver: (event: DragEvent<HTMLDivElement>) => void;
+  onDrop: (event: DragEvent<HTMLDivElement>) => void;
+}
+
+const DragDropContext = createContext<DragDropContextType | null>(null);
+
+interface DragDropProviderProps {
+  children: ReactNode;
+}
+
+export const DragDropProvider = ({ children }: DragDropProviderProps) => {
+  const [draggedNodeType, setDraggedNodeType] = useState<NodeType>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const onDragStart = useCallback(
+    (event: DragEvent<HTMLDivElement>, nodeType: string) => {
+      setDraggedNodeType(nodeType);
+      setIsDragging(true);
+      event.dataTransfer.setData("text/plain", nodeType);
+      event.dataTransfer.effectAllowed = "move";
+    },
+    [],
+  );
+
+  const onDragOver = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+  }, []);
+
+  const onDrop = useCallback((event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    setDraggedNodeType(null);
+  }, []);
+
+  const contextValue: DragDropContextType = {
+    draggedNodeType,
+    isDragging,
+    setDraggedNodeType,
+    onDragStart,
+    onDragOver,
+    onDrop,
+  };
 
   return (
-    <DnDContext.Provider value={[type, setType]}>
+    <DragDropContext.Provider value={contextValue}>
       {children}
-    </DnDContext.Provider>
+    </DragDropContext.Provider>
   );
 };
 
-export default DnDContext;
+export const useDragDrop = () => {
+  const context = useContext(DragDropContext);
 
-export const useDnD = () => {
-  return useContext(DnDContext);
+  if (!context) {
+    throw new Error("useDragDrop must be used within a DragDropProvider");
+  }
+
+  return context;
+};
+
+// Legacy hook for backward compatibility
+export const useDnD = (): [NodeType, (type: NodeType) => void] => {
+  const { draggedNodeType, setDraggedNodeType } = useDragDrop();
+
+  return [draggedNodeType, setDraggedNodeType];
 };

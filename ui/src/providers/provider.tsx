@@ -4,7 +4,7 @@ import { HeroUIProvider } from "@heroui/system";
 import { useHref, useNavigate } from "react-router-dom";
 import { ReactFlowProvider } from "@xyflow/react";
 
-import { DnDProvider } from "./drag-drop-provider";
+import { DragDropProvider } from "./drag-drop-provider";
 
 import { WorkflowBuilderProvider } from "@/providers/flow-provider";
 
@@ -19,11 +19,11 @@ export function Provider({ children }: { children: React.ReactNode }) {
 
   return (
     <HeroUIProvider navigate={navigate} useHref={useHref}>
-      <DnDProvider>
-        <ReactFlowProvider>
+      <ReactFlowProvider>
+        <DragDropProvider>
           <WorkflowBuilderProvider>{children}</WorkflowBuilderProvider>
-        </ReactFlowProvider>
-      </DnDProvider>
+        </DragDropProvider>
+      </ReactFlowProvider>
     </HeroUIProvider>
   );
 }

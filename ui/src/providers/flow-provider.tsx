@@ -308,6 +308,8 @@ export const useWorkflowBuilder = () => {
 };
 
 // Additional utility hooks
+export const getNewId = () => `node-${Date.now()}`;
+
 export const useWorkflowNodes = () => {
   const { nodes } = useWorkflowBuilder();
 

@@ -9,7 +9,7 @@ import {
 
 export const Palette = () => {
   const { onDragStart, isDragging, draggedNodeType } = useDragDrop();
-  const { addNode, nodes } = useWorkflowBuilder();
+  const { addNode, nodes, edges } = useWorkflowBuilder();
 
   const handleClickToAdd = (nodeType: string) => {
     const nodeId = `node-${Date.now()}`;
@@ -68,6 +68,26 @@ export const Palette = () => {
     }
 
     addNode(newNode);
+  };
+
+  const handleExportWorkflow = () => {
+    const workflowData = {
+      nodes,
+      edges,
+      exportedAt: new Date().toISOString(),
+    };
+
+    const dataStr = JSON.stringify(workflowData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: "application/json" });
+
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `workflow-${new Date().toISOString().split("T")[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -132,6 +152,18 @@ export const Palette = () => {
           <div className="handle-preview top" />
           <div className="node-type-label">END</div>
           <div className="node-name">End Node</div>
+        </div>
+      </button>
+
+      {/* Export Button */}
+      <button
+        className="export-button"
+        onClick={handleExportWorkflow}
+        title="Export workflow as JSON"
+      >
+        <div className="export-content">
+          <div className="export-icon">📥</div>
+          <div className="export-text">Export Workflow</div>
         </div>
       </button>
     </aside>

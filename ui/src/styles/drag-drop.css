@@ -296,6 +296,49 @@
     transform: scale(0.9);
   }
 
+  /* Export Button Styles */
+  .export-button {
+    margin-top: 20px;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #f9fafb;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+
+  .export-button:hover {
+    background-color: #f3f4f6;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .export-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .export-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .export-icon {
+    font-size: 20px;
+  }
+
+  .export-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #374151;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
   /* Connection validation styles */
   .react-flow__connection-line {
     stroke: #3b82f6;

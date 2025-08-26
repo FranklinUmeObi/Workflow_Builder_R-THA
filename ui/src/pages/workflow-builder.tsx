@@ -1,9 +1,10 @@
+import { BuilderContainer } from "@/components/Builder/builder-container";
 import DefaultLayout from "@/layouts/default";
 
 export default function WorkflowBuilderPage() {
   return (
     <DefaultLayout>
-      <h1>workflow builder</h1>
+      <BuilderContainer />
     </DefaultLayout>
   );
 }

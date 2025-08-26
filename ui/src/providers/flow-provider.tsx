@@ -37,6 +37,9 @@ export interface WorkflowBuilderContextType {
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
 
+  // Connection validation
+  isValidConnection: (connection: Connection | WorkflowEdge) => boolean;
+
   // Node operations
   addNode: (node: Omit<CustomWorkflowNode, "id"> & { id?: string }) => void;
   removeNode: (nodeId: string) => void;
@@ -307,13 +310,99 @@ export const WorkflowBuilderProvider = ({
     [nodes, performValidation],
   );
 
+  // Connection validation function
+  const isValidConnection = useCallback(
+    (connection: Connection | WorkflowEdge): boolean => {
+      // Handle both Connection and WorkflowEdge types
+      const sourceId = connection.source;
+      const targetId = connection.target;
+
+      const sourceNode = nodes.find((node) => node.id === sourceId);
+      const targetNode = nodes.find((node) => node.id === targetId);
+
+      if (!sourceNode || !targetNode) {
+        return false;
+      }
+
+      // Prevent self-connections
+      if (sourceId === targetId) {
+        return false;
+      }
+
+      // Check if connection already exists
+      const existingConnection = edges.find(
+        (edge) => edge.source === sourceId && edge.target === targetId,
+      );
+
+      if (existingConnection) {
+        return false;
+      }
+
+      // Validate based on source node type
+      switch (sourceNode.type) {
+        case "start": {
+          // Start nodes can only have one outgoing connection
+          const outgoingEdges = edges.filter(
+            (edge) => edge.source === sourceNode.id,
+          );
+
+          return outgoingEdges.length === 0;
+        }
+        case "step": {
+          // Step nodes can only have one outgoing connection
+          const outgoingEdges = edges.filter(
+            (edge) => edge.source === sourceNode.id,
+          );
+
+          return outgoingEdges.length === 0;
+        }
+        case "decision": {
+          // Decision nodes can have up to two outgoing connections
+          const outgoingEdges = edges.filter(
+            (edge) => edge.source === sourceNode.id,
+          );
+
+          return outgoingEdges.length < 2;
+        }
+        case "end": {
+          // End nodes cannot have outgoing connections
+          return false;
+        }
+        default:
+          return false;
+      }
+    },
+    [nodes, edges],
+  );
+
   const onConnect = useCallback(
     (connection: Connection) => {
+      // Validate connection before adding
+      if (!isValidConnection(connection)) {
+        return;
+      }
+
       setEdges((currentEdges) => {
-        const updatedEdges = addEdge(
-          connection,
-          currentEdges,
-        ) as WorkflowEdge[];
+        let newEdge = { ...connection } as WorkflowEdge;
+
+        // Auto-label Decision node edges
+        const sourceNode = nodes.find((node) => node.id === connection.source);
+
+        if (sourceNode?.type === "decision") {
+          const existingOutgoingEdges = currentEdges.filter(
+            (edge) => edge.source === sourceNode.id,
+          );
+
+          // If this is the first edge from a decision node, label it "yes"
+          // If this is the second edge, label it "no"
+          if (existingOutgoingEdges.length === 0) {
+            newEdge.label = "yes";
+          } else if (existingOutgoingEdges.length === 1) {
+            newEdge.label = "no";
+          }
+        }
+
+        const updatedEdges = addEdge(newEdge, currentEdges) as WorkflowEdge[];
 
         // Trigger validation after new connection
         setTimeout(() => performValidation(nodes, updatedEdges), 0);
@@ -321,7 +410,7 @@ export const WorkflowBuilderProvider = ({
         return updatedEdges;
       });
     },
-    [nodes, performValidation],
+    [nodes, performValidation, isValidConnection],
   );
 
   // Node operations
@@ -523,6 +612,9 @@ export const WorkflowBuilderProvider = ({
     onNodesChange,
     onEdgesChange,
     onConnect,
+
+    // Connection validation
+    isValidConnection,
 
     // Node operations
     addNode,

@@ -12,6 +12,7 @@ import { StartNode } from "./nodes/StartNode";
 import { StepNode } from "./nodes/StepNode";
 import { DecisionNode } from "./nodes/DecisionNode";
 import { EndNode } from "./nodes/EndNode";
+import { CustomEdge } from "./edges/CustomEdge";
 
 import {
   createDefaultStartNode,
@@ -34,8 +35,15 @@ export const WorkflowCanvas = () => {
     setIsOverDropZone,
   } = useDragDrop();
 
-  const { nodes, addNode, edges, onNodesChange, onEdgesChange, onConnect } =
-    useWorkflowBuilder();
+  const {
+    nodes,
+    addNode,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    isValidConnection,
+  } = useWorkflowBuilder();
 
   useWorkflowShortcuts({ enabled: true });
 
@@ -46,6 +54,14 @@ export const WorkflowCanvas = () => {
       step: StepNode,
       decision: DecisionNode,
       end: EndNode,
+    }),
+    [],
+  );
+
+  // Register custom edge types
+  const edgeTypes = useMemo(
+    () => ({
+      default: CustomEdge,
     }),
     [],
   );
@@ -120,7 +136,9 @@ export const WorkflowCanvas = () => {
     >
       <ReactFlow
         defaultViewport={{ x: 0, y: 0, zoom: 1 }}
+        edgeTypes={edgeTypes}
         edges={edges}
+        isValidConnection={isValidConnection}
         nodeTypes={nodeTypes}
         nodes={nodes}
         onConnect={onConnect}

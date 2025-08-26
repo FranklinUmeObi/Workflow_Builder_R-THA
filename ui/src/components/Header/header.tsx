@@ -7,7 +7,6 @@ import {
   NavbarItem,
 } from "@heroui/navbar";
 
-import { ThemeSwitch } from "@/components/Header/theme-switch";
 export const Header = () => {
   return (
     <HeroUINavbar maxWidth="xl" position="sticky">
@@ -22,9 +21,6 @@ export const Header = () => {
         </NavbarItem>
       </NavbarContent>
       <NavbarContent justify="end">
-        <NavbarItem>
-          <ThemeSwitch />
-        </NavbarItem>
         <NavbarItem>
           <Button color="primary" variant="flat">
             Export

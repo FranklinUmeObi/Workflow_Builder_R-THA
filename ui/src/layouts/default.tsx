@@ -8,9 +8,7 @@ export default function DefaultLayout({
   return (
     <div className="relative flex flex-col h-screen">
       <Header />
-      <main className="container mx-auto w-screen h-screen  bg-red-600">
-        {children}
-      </main>
+      <main className="container mx-auto w-screen h-screen">{children}</main>
     </div>
   );
 }

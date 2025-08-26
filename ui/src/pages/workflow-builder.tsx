@@ -1,4 +1,4 @@
-import { BuilderContainer } from "@/components/Builder/builder-container";
+import { BuilderContainer } from "@/components/Builder/workflow-canvas-container";
 import DefaultLayout from "@/layouts/default";
 
 export default function WorkflowBuilderPage() {

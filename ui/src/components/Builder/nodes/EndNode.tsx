@@ -37,6 +37,7 @@ export const EndNode: React.FC<EndNodeProps> = ({ id, data, selected }) => {
         <NodeHandle
           color="bg-red-500"
           id="input"
+          nodeId={id}
           position={Position.Top}
           style={{
             top: -6,

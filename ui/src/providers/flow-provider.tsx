@@ -27,6 +27,13 @@ export interface WorkflowEdge extends Edge {
   label?: string;
 }
 
+// Handle click state for easy connections
+export interface HandleClickState {
+  nodeId: string;
+  handleId: string;
+  handleType: "source" | "target";
+}
+
 export interface WorkflowBuilderContextType {
   // State
   nodes: CustomWorkflowNode[];
@@ -79,6 +86,20 @@ export interface WorkflowBuilderContextType {
     nodeId: string,
     changes: Partial<CustomWorkflowNode>,
   ) => void;
+
+  // Easy connections
+  pendingConnection: HandleClickState | null;
+  onHandleClick: (
+    nodeId: string,
+    handleId: string,
+    handleType: "source" | "target",
+  ) => void;
+  clearPendingConnection: () => void;
+  isHandleAvailable: (
+    nodeId: string,
+    handleId: string,
+    handleType: "source" | "target",
+  ) => boolean;
 }
 
 const WorkflowBuilderContext = createContext<WorkflowBuilderContextType | null>(
@@ -110,6 +131,10 @@ export const WorkflowBuilderProvider = ({
 
   // Inline editing state
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+
+  // Easy connections state
+  const [pendingConnection, setPendingConnection] =
+    useState<HandleClickState | null>(null);
 
   // Validation state
   const [validationResult, setValidationResult] = useState<ValidationResult>({
@@ -603,6 +628,108 @@ export const WorkflowBuilderProvider = ({
     [updateNode],
   );
 
+  // Easy connections functions
+  const isHandleAvailable = useCallback(
+    (nodeId: string, handleId: string, handleType: "source" | "target") => {
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node) return false;
+
+      if (handleType === "source") {
+        // Check if this source handle already has connections
+        const existingConnections = edges.filter(
+          (edge) => edge.source === nodeId && edge.sourceHandle === handleId,
+        );
+
+        // Different rules based on node type
+        switch (node.type) {
+          case "start":
+          case "step":
+            return existingConnections.length === 0; // Only one outgoing connection
+          case "decision":
+            return existingConnections.length === 0; // Each handle can have one connection
+          case "end":
+            return false; // End nodes have no output handles
+          default:
+            return false;
+        }
+      } else {
+        // Target handle
+        const existingConnections = edges.filter(
+          (edge) => edge.target === nodeId && edge.targetHandle === handleId,
+        );
+
+        // All node types except start can have one incoming connection
+        switch (node.type) {
+          case "start":
+            return false; // Start nodes have no input handles
+          case "step":
+          case "decision":
+          case "end":
+            return existingConnections.length === 0; // Only one incoming connection
+          default:
+            return false;
+        }
+      }
+    },
+    [nodes, edges],
+  );
+
+  const clearPendingConnection = useCallback(() => {
+    setPendingConnection(null);
+  }, []);
+
+  const onHandleClick = useCallback(
+    (nodeId: string, handleId: string, handleType: "source" | "target") => {
+      // Check if handle is available
+      if (!isHandleAvailable(nodeId, handleId, handleType)) {
+        return;
+      }
+
+      if (!pendingConnection) {
+        // First click - store the handle
+        setPendingConnection({ nodeId, handleId, handleType });
+      } else {
+        // Second click - try to create connection
+        const {
+          nodeId: sourceNodeId,
+          handleId: sourceHandleId,
+          handleType: sourceType,
+        } = pendingConnection;
+
+        // Validate that we have a source and target
+        if (sourceType === "source" && handleType === "target") {
+          // Create connection from pending to current
+          const connection: Connection = {
+            source: sourceNodeId,
+            sourceHandle: sourceHandleId,
+            target: nodeId,
+            targetHandle: handleId,
+          };
+
+          if (isValidConnection(connection)) {
+            onConnect(connection);
+          }
+        } else if (sourceType === "target" && handleType === "source") {
+          // Create connection from current to pending
+          const connection: Connection = {
+            source: nodeId,
+            sourceHandle: handleId,
+            target: sourceNodeId,
+            targetHandle: sourceHandleId,
+          };
+
+          if (isValidConnection(connection)) {
+            onConnect(connection);
+          }
+        }
+
+        // Clear pending connection after attempt
+        setPendingConnection(null);
+      }
+    },
+    [pendingConnection, isHandleAvailable, isValidConnection, onConnect],
+  );
+
   const contextValue: WorkflowBuilderContextType = {
     // State
     nodes,
@@ -652,6 +779,12 @@ export const WorkflowBuilderProvider = ({
     setEditingNodeId,
     isNodeEditing,
     saveNodeChanges,
+
+    // Easy connections
+    pendingConnection,
+    onHandleClick,
+    clearPendingConnection,
+    isHandleAvailable,
   };
 
   return (

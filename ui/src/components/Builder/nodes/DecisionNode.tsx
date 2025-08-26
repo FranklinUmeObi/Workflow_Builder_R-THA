@@ -63,6 +63,7 @@ export const DecisionNode: React.FC<DecisionNodeProps> = ({
         <NodeHandle
           color="bg-blue-500"
           id="input"
+          nodeId={id}
           position={Position.Top}
           style={{
             top: -6,
@@ -165,6 +166,7 @@ export const DecisionNode: React.FC<DecisionNodeProps> = ({
         <NodeHandle
           color="bg-green-500"
           id="yes"
+          nodeId={id}
           position={Position.Bottom}
           style={{
             bottom: -6,
@@ -177,6 +179,7 @@ export const DecisionNode: React.FC<DecisionNodeProps> = ({
         <NodeHandle
           color="bg-red-500"
           id="no"
+          nodeId={id}
           position={Position.Bottom}
           style={{
             bottom: -6,

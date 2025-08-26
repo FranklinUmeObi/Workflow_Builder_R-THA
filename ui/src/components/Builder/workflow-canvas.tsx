@@ -43,6 +43,8 @@ export const WorkflowCanvas = () => {
     onEdgesChange,
     onConnect,
     isValidConnection,
+    clearPendingConnection,
+    pendingConnection,
   } = useWorkflowBuilder();
 
   useWorkflowShortcuts({ enabled: true });
@@ -130,6 +132,10 @@ export const WorkflowCanvas = () => {
     [screenToFlowPosition, draggedNodeType, addNode, onDrop],
   );
 
+  const handlePaneClick = useCallback(() => {
+    clearPendingConnection();
+  }, [clearPendingConnection]);
+
   return (
     <div
       className={`reactflow-wrapper relative ${isDragging ? "drag-active" : ""} ${isOverDropZone ? "drop-zone-active" : ""}`}
@@ -147,6 +153,7 @@ export const WorkflowCanvas = () => {
         onDrop={handleDrop}
         onEdgesChange={onEdgesChange}
         onNodesChange={onNodesChange}
+        onPaneClick={handlePaneClick}
       >
         <Background />
         <Controls />
@@ -178,6 +185,21 @@ export const WorkflowCanvas = () => {
       <div className="absolute top-4 left-4 z-10">
         <ValidationBadge />
       </div>
+
+      {/* Pending Connection Indicator */}
+      {pendingConnection && (
+        <div className="absolute top-4 right-4 z-10 bg-blue-100 border border-blue-300 rounded-lg px-3 py-2 shadow-lg">
+          <div className="text-sm font-medium text-blue-800">
+            Click-to-Connect Mode
+          </div>
+          <div className="text-xs text-blue-600">
+            Selected: {pendingConnection.handleType} handle
+          </div>
+          <div className="text-xs text-blue-500 mt-1">
+            Click a compatible handle to connect, or click elsewhere to cancel
+          </div>
+        </div>
+      )}
     </div>
   );
 };

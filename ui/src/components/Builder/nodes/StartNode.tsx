@@ -48,6 +48,7 @@ export const StartNode: React.FC<StartNodeProps> = ({ id, data, selected }) => {
         <NodeHandle
           color="bg-green-500"
           id="output"
+          nodeId={id}
           position={Position.Bottom}
           style={{
             bottom: -6,

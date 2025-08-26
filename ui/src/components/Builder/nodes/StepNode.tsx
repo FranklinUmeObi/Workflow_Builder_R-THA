@@ -49,6 +49,7 @@ export const StepNode: React.FC<StepNodeProps> = ({ id, data, selected }) => {
         <NodeHandle
           color="bg-orange-500"
           id="input"
+          nodeId={id}
           position={Position.Top}
           style={{
             top: -6,
@@ -147,6 +148,7 @@ export const StepNode: React.FC<StepNodeProps> = ({ id, data, selected }) => {
         <NodeHandle
           color="bg-orange-500"
           id="output"
+          nodeId={id}
           position={Position.Bottom}
           style={{
             bottom: -6,

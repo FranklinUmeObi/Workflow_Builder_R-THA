@@ -1,0 +1,240 @@
+/* Palette Sidebar Styles */
+
+.dndflow aside {
+  border-right: 1px solid #eee;
+  padding: 15px 10px;
+  font-size: 12px;
+  background: #fcfcfc;
+}
+
+.dndflow aside .description {
+  margin-bottom: 15px;
+  color: #666;
+  line-height: 1.4;
+}
+
+@media screen and (min-width: 768px) {
+  .dndflow aside {
+    width: 20%;
+    max-width: 250px;
+  }
+}
+
+/* Legacy node styles (keeping for backward compatibility) */
+.dndflow .dndnode {
+  height: 20px;
+  padding: 4px;
+  border: 1px solid #1a192b;
+  border-radius: 2px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: grab;
+}
+
+.dndflow .dndnode.input {
+  border-color: #0041d0;
+}
+
+.dndflow .dndnode.output {
+  border-color: #ff0072;
+}
+
+/* Custom node palette styles */
+.dndflow .dndnode-custom {
+  margin-bottom: 12px;
+  cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.dndflow .dndnode-custom:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dndflow .dndnode-custom:active {
+  transform: translateY(0);
+}
+
+/* Node preview container */
+.node-preview {
+  position: relative;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 6px;
+  border: 2px solid;
+  padding: 8px 12px;
+}
+
+.node-type-label {
+  font-size: 10px;
+  font-weight: 600;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.node-name {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Handle previews */
+.handle-preview {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+.handle-preview.top {
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.handle-preview.bottom {
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.handle-preview.bottom-left {
+  bottom: -4px;
+  left: 25%;
+  transform: translateX(-50%);
+  background-color: #10b981;
+}
+
+.handle-preview.bottom-right {
+  bottom: -4px;
+  right: 25%;
+  transform: translateX(50%);
+  background-color: #ef4444;
+}
+
+/* Start Node Preview */
+.start-preview {
+  background-color: #dcfce7;
+  border-color: #bbf7d0;
+}
+
+.start-preview .node-type-label {
+  color: #15803d;
+}
+
+.start-preview .node-name {
+  color: #166534;
+}
+
+.start-preview .handle-preview.bottom {
+  background-color: #22c55e;
+}
+
+/* Step Node Preview */
+.step-preview {
+  background-color: #fed7aa;
+  border-color: #fdba74;
+}
+
+.step-preview .node-type-label {
+  color: #c2410c;
+}
+
+.step-preview .node-name {
+  color: #9a3412;
+}
+
+.step-preview .handle-preview.top,
+.step-preview .handle-preview.bottom {
+  background-color: #f97316;
+}
+
+/* Decision Node Preview */
+.decision-preview {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  min-width: 60px;
+  min-height: 60px;
+}
+
+.decision-preview .node-type-label {
+  color: #1d4ed8;
+}
+
+.decision-preview .node-name {
+  color: #1e40af;
+}
+
+.decision-preview .handle-preview.top {
+  background-color: #3b82f6;
+}
+
+/* End Node Preview */
+.end-preview {
+  background-color: #fee2e2;
+  border-color: #fecaca;
+}
+
+.end-preview .node-type-label {
+  color: #dc2626;
+}
+
+.end-preview .node-name {
+  color: #b91c1c;
+}
+
+.end-preview .handle-preview.top {
+  background-color: #ef4444;
+}
+
+/* Export Button Styles */
+.export-button {
+  margin-top: 20px;
+  padding: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #f9fafb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.export-button:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.export-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.export-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.export-icon {
+  font-size: 20px;
+}
+
+.export-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
